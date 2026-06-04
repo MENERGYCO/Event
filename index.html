@@ -108,6 +108,9 @@
   #progress-wrap{position:fixed; top:0; left:0; right:0; height:7px; background:rgba(255,255,255,.08); z-index:9999;}
   #progress{height:100%; width:0%; background:linear-gradient(90deg,var(--orange),var(--yellow));}
 
+  /* logo overlay on every slide */
+  .slide-logo{position:absolute; top:38px; right:52px; z-index:10; height:58px; object-fit:contain;}
+
   /* transitions — content is ALWAYS visible; slides cross-fade.
      (entrance opacity-animations are avoided so frozen/exported frames never render blank) */
   .anim{opacity:1;}
@@ -245,7 +248,7 @@
       <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Énergies renouvelables</span></div>
       <h2 class="title anim d2" style="font-size:64px; max-width:26ch;">Évaluer le <span class="o">potentiel ENR</span> de votre bâtiment</h2>
       <p class="lead anim d2" style="margin-top:22px; max-width:60ch; font-size:30px;">Études de faisabilité technico-économiques, du gisement au temps de retour sur investissement.</p>
-      <div class="cards anim d3" style="grid-template-columns:1fr 1fr 1fr 1fr; flex:1; margin-top:48px;">
+      <div class="cards anim d3" style="grid-template-columns:1fr 1fr 1fr 1fr; flex:none; margin-top:48px;">
         <div class="card">
           <span class="tag">01 · Photovoltaïque</span>
           <p style="font-size:25px;">Autoconsommation collective ou revente.</p>
@@ -386,6 +389,15 @@
 </template>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="deck-stage.js"></script>
+<script>
+  document.querySelectorAll('.slide').forEach(function(slide){
+    var logo = document.createElement('img');
+    logo.src = 'assets/Logo _EnergyCo.png';
+    logo.className = 'slide-logo';
+    logo.alt = 'EnergyCo';
+    slide.appendChild(logo);
+  });
+</script>
 <script>
   (function(){
     var DURATION = 7000;            // ms par slide
