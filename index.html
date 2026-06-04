@@ -100,9 +100,10 @@
   .vitem p{font-size:24px; color:var(--slate); line-height:1.4;}
 
   /* certifications strip */
-  .certs{display:flex; flex-wrap:wrap; gap:16px; align-items:center;}
+  .certs{display:flex; flex-wrap:wrap; gap:20px; align-items:center;}
   .cb{font-family:var(--ff-display); font-weight:600; font-size:24px; color:var(--white);
     border:1px solid var(--line); background:rgba(255,255,255,.04); padding:11px 22px; border-radius:999px;}
+  .cert-img{height:64px; object-fit:contain; background:var(--white); border-radius:14px; padding:8px 16px;}
 
   /* progress bar */
   #progress-wrap{position:fixed; top:0; left:0; right:0; height:7px; background:rgba(255,255,255,.08); z-index:9999;}
@@ -356,11 +357,11 @@
         <div class="grow"></div>
         <p class="kicker anim d4" style="font-size:24px; color:var(--slate); margin-bottom:18px;">Certifiés &amp; reconnus</p>
         <div class="certs anim d4">
-          <span class="cb">OPQIBI</span>
-          <span class="cb">RGE</span>
-          <span class="cb">AFNOR Certification</span>
-          <span class="cb">Bureau Veritas</span>
-          <span class="cb">CoachCopro</span>
+          <img class="cert-img" src="certifs/certification-opqibi-1333_T1.jpg" alt="OPQIBI" />
+          <img class="cert-img" src="certifs/qualibat-rge-732x510-c-default.webp" alt="RGE" />
+          <img class="cert-img" src="certifs/afnor.png" alt="AFNOR Certification" />
+          <img class="cert-img" src="certifs/veritas.png" alt="Bureau Veritas" />
+          <img class="cert-img" src="certifs/coachcopro.png" alt="CoachCopro" />
         </div>
       </div>
       <div class="img montage" style="padding:46px 46px 46px 0;">
