@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EnergyCo. — Affichage événementiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --orange:#F26C2B; --orange-d:#D9551A; --yellow:#F2C14E;
+    --navy:#102536; --navy-2:#0B1A28; --navy-3:#0E2031;
+    --panel:#173050; --panel-2:#1B3957; --line:rgba(255,255,255,.12);
+    --white:#FFFFFF; --slate:#9DB0C2; --slate-d:#7B8FA3;
+    --ff-display:'Poppins',sans-serif; --ff-body:'Mulish',sans-serif;
+    --type-kicker:30px; --type-title:78px; --type-hero:104px;
+    --type-sub:44px; --type-body:34px; --type-small:27px; --type-mega:170px;
+    --pad-x:118px; --pad-y:92px; --gap:40px;
+    --radius:26px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#05101a;}
+  deck-stage:not(:defined){visibility:hidden;}
+  deck-stage{background:#05101a;}
+
+  /* ---- slide frame ---- */
+  .slide{
+    display:flex; width:100%; height:100%;
+    font-family:var(--ff-body); color:var(--white);
+    background:var(--navy); position:relative; overflow:hidden;
+  }
+  .slide::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(1100px 800px at 88% -8%, rgba(242,108,43,.10), transparent 60%),
+      radial-gradient(1300px 1100px at -6% 108%, rgba(54,96,140,.30), transparent 60%);
+  }
+  .slide.dark{background:var(--navy-2);}
+  .pad{padding:var(--pad-y) var(--pad-x); position:relative; z-index:2; width:100%; height:100%; display:flex; flex-direction:column;}
+
+  /* ---- type ---- */
+  .kicker{font-family:var(--ff-display); font-weight:700; font-size:var(--type-kicker);
+    letter-spacing:.18em; text-transform:uppercase; color:var(--orange); margin:0;}
+  .title{font-family:var(--ff-display); font-weight:800; font-size:var(--type-title);
+    line-height:1.04; margin:0; letter-spacing:-.01em;}
+  .title .o{color:var(--orange);}
+  .hero{font-size:var(--type-hero);}
+  h2,h3,p{margin:0;}
+  .lead{font-size:var(--type-body); line-height:1.5; color:var(--slate); max-width:24ch; font-weight:500;}
+  .dot{color:var(--orange);}
+  .logo{font-family:var(--ff-display); font-weight:700; letter-spacing:-.02em; color:var(--white);}
+  .logo .pt{color:var(--orange);}
+
+  /* ---- helpers ---- */
+  .grow{flex:1;}
+  .row{display:flex;}
+  .col{display:flex; flex-direction:column;}
+  .photo{background-size:cover; background-position:center; background-repeat:no-repeat;}
+  .ph-tint{position:absolute; inset:0;}
+
+  /* split layout: text left, image right */
+  .split{display:grid; grid-template-columns:1.05fr .95fr; width:100%; height:100%;}
+  .split .txt{padding:var(--pad-y) 70px var(--pad-y) var(--pad-x); display:flex; flex-direction:column; position:relative; z-index:2;}
+  .split .img{position:relative;}
+  .split .img .photo{position:absolute; inset:0;}
+  .split .img::after{content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, var(--navy) 0%, rgba(16,37,54,.35) 16%, rgba(16,37,54,0) 42%);}
+  .split .img.montage::after{display:none;}
+  /* montage tiles — laid out with flex, NOT absolutely positioned like single-photo .img */
+  .mphoto{background-size:cover; background-position:center; background-repeat:no-repeat;}
+
+  /* eyebrow above title with rule */
+  .eyebrow{display:flex; align-items:center; gap:22px; margin-bottom:34px;}
+  .eyebrow .bar{width:64px; height:5px; background:var(--orange); border-radius:3px;}
+
+  /* cards */
+  .cards{display:grid; gap:30px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:42px 44px; display:flex; flex-direction:column; gap:14px; position:relative; overflow:hidden;}
+  .card .tag{font-family:var(--ff-display); font-weight:700; font-size:var(--type-kicker);
+    letter-spacing:.16em; text-transform:uppercase; color:var(--orange);}
+  .card h3{font-family:var(--ff-display); font-weight:700; font-size:38px; color:var(--white);}
+  .card p{font-size:var(--type-small); line-height:1.45; color:var(--slate);}
+  .card .pill{margin-top:auto; align-self:flex-start; font-family:var(--ff-display); font-weight:600;
+    font-size:24px; color:var(--white); background:rgba(242,108,43,.16); border:1px solid rgba(242,108,43,.5);
+    padding:9px 18px; border-radius:999px;}
+  .card .num{position:absolute; right:30px; top:18px; font-family:var(--ff-display); font-weight:800;
+    font-size:96px; color:rgba(255,255,255,.05); line-height:1;}
+
+  /* big stat numbers */
+  .mega{font-family:var(--ff-display); font-weight:800; font-size:var(--type-mega); line-height:.92; color:var(--white);}
+  .mega .u{font-size:.42em; color:var(--orange); font-weight:700;}
+
+  /* value list */
+  .vgrid{display:grid; grid-template-columns:1fr 1fr; gap:32px 64px;}
+  .vitem{display:flex; gap:30px; align-items:flex-start; padding-top:30px; border-top:1px solid var(--line);}
+  .vitem .vn{font-family:var(--ff-display); font-weight:800; font-size:54px; color:var(--orange); line-height:1; min-width:90px;}
+  .vitem h3{font-family:var(--ff-display); font-weight:700; font-size:38px; margin-bottom:8px;}
+  .vitem p{font-size:24px; color:var(--slate); line-height:1.4;}
+
+  /* certifications strip */
+  .certs{display:flex; flex-wrap:wrap; gap:16px; align-items:center;}
+  .cb{font-family:var(--ff-display); font-weight:600; font-size:24px; color:var(--white);
+    border:1px solid var(--line); background:rgba(255,255,255,.04); padding:11px 22px; border-radius:999px;}
+
+  /* progress bar */
+  #progress-wrap{position:fixed; top:0; left:0; right:0; height:7px; background:rgba(255,255,255,.08); z-index:9999;}
+  #progress{height:100%; width:0%; background:linear-gradient(90deg,var(--orange),var(--yellow));}
+
+  /* transitions — content is ALWAYS visible; slides cross-fade.
+     (entrance opacity-animations are avoided so frozen/exported frames never render blank) */
+  .anim{opacity:1;}
+  .slide{transition:opacity .6s ease;}
+  @media (prefers-reduced-motion:no-preference){
+    section[data-deck-active] .imgzoom .photo{animation:slowzoom 9s ease-out both;}
+  }
+  @keyframes slowzoom{from{transform:scale(1.07);} to{transform:scale(1);}}
+</style>
+</head>
+<body>
+
+<div id="progress-wrap"><div id="progress"></div></div>
+
+<deck-stage width="1920" height="1080" no-rail>
+
+  <!-- 01 — COVER -->
+  <section data-label="Cover" class="slide dark">
+    <div class="split">
+      <div class="txt">
+        <div class="logo anim d1" style="font-size:56px;">EnergyCo<span class="pt">.</span></div>
+        <div class="grow"></div>
+        <p class="kicker anim d2">Bureau d'études thermique — Paris</p>
+        <h1 class="title hero anim d3" style="margin-top:30px;">Performance<br/><span class="o">énergétique</span><br/>du bâtiment<span class="dot">.</span></h1>
+        <div class="grow"></div>
+        <p class="anim d4" style="font-family:var(--ff-display); font-weight:600; font-size:32px; color:var(--white); letter-spacing:.01em;">
+          Audits énergétiques · DPE · DTG · PPPT<br/>
+          <span style="color:var(--slate); font-weight:500;">au service d'une rénovation maîtrisée.</span>
+        </p>
+      </div>
+      <div class="img imgzoom">
+        <div class="photo" style="background-image:url('assets/thermal-camera.jpg'); background-position:center 28%;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 — QUI SOMMES-NOUS -->
+  <section data-label="Qui sommes-nous" class="slide">
+    <div class="split">
+      <div class="txt">
+        <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Qui sommes-nous</span></div>
+        <h2 class="title anim d2">Bureau d'études<br/><span class="o">thermique</span>,<br/>basé à Paris<span class="dot">.</span></h2>
+        <p class="lead anim d3" style="margin-top:44px; max-width:30ch;">
+          Spécialistes de la performance énergétique du bâtiment.
+        </p>
+        <p class="lead anim d4" style="margin-top:26px; max-width:32ch; color:var(--slate-d);">
+          Audits, DPE, DTG et PPPT — en partenariat étroit avec les architectes et la maîtrise d'œuvre.
+        </p>
+        <div class="grow"></div>
+        <p class="anim d5" style="font-family:var(--ff-display); font-weight:700; font-size:30px; color:var(--white);">
+          Du diagnostic initial <span class="o">→</span> à la mise en œuvre des travaux.
+        </p>
+      </div>
+      <div class="img imgzoom">
+        <div class="photo" style="background-image:url('assets/paris-window.jpg'); background-position:center 30%;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 — NOTRE ENGAGEMENT -->
+  <section data-label="Notre engagement" class="slide dark">
+    <div class="pad" style="justify-content:center;">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Notre engagement</span></div>
+      <h2 class="title anim d2" style="font-size:96px; max-width:20ch;">
+        Structurer des décisions <span class="o">énergétiques fiables</span><span class="dot">.</span>
+      </h2>
+      <p class="lead anim d3" style="margin-top:50px; max-width:46ch; font-size:38px;">
+        Conscients des enjeux climatiques, nous accompagnons durablement vos projets de rénovation — dans le respect des exigences réglementaires, environnementales et économiques.
+      </p>
+    </div>
+  </section>
+
+  <!-- 04 — NOS PRESTATIONS -->
+  <section data-label="Nos prestations" class="slide">
+    <div class="pad">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Nos prestations</span></div>
+      <h2 class="title anim d2" style="font-size:64px; margin-bottom:46px;">DPE · Audit · DTG · PPPT</h2>
+      <div class="cards anim d3" style="grid-template-columns:1fr 1fr 1fr 1fr; flex:1;">
+        <div class="card">
+          <span class="num">01</span>
+          <span class="tag">DPE</span>
+          <h3>Diagnostic de performance</h3>
+          <p>Évaluation des consommations &amp; de l'impact carbone.</p>
+          <span class="pill">Obligatoire en vente / location</span>
+        </div>
+        <div class="card">
+          <span class="num">02</span>
+          <span class="tag">Audit</span>
+          <h3>Audit énergétique</h3>
+          <p>Étude approfondie &amp; plan de travaux hiérarchisé selon vos objectifs.</p>
+          <span class="pill">Plan d'action chiffré</span>
+        </div>
+        <div class="card">
+          <span class="num">03</span>
+          <span class="tag">DTG</span>
+          <h3>Diagnostic technique global</h3>
+          <p>État de la copropriété &amp; préconisations à horizon 10 ans.</p>
+          <span class="pill">Vision patrimoniale</span>
+        </div>
+        <div class="card">
+          <span class="num">04</span>
+          <span class="tag">PPPT</span>
+          <h3>Plan pluriannuel de travaux</h3>
+          <p>Programmation des travaux sur 10 ans.</p>
+          <span class="pill">Obligatoire copropriétés +15 ans</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 — EXPERTISE COPROPRIÉTÉ -->
+  <section data-label="Expertise copropriété" class="slide dark">
+    <div class="split" style="grid-template-columns:.95fr 1.05fr;">
+      <div class="img imgzoom">
+        <div class="photo" style="background-image:url('assets/window-measure.jpg'); background-position:center 35%;"></div>
+        <div class="ph-tint" style="background:linear-gradient(270deg, var(--navy-2) 0%, rgba(11,26,40,.3) 18%, transparent 44%);"></div>
+      </div>
+      <div class="txt" style="padding-left:80px;">
+        <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Expertise copropriété</span></div>
+        <h2 class="title anim d2" style="font-size:70px;">De l'assemblée<br/>générale à la<br/><span class="o">mise en œuvre</span><span class="dot">.</span></h2>
+        <div class="col anim d3" style="gap:30px; margin-top:54px;">
+          <div class="row" style="gap:24px; align-items:center;"><span class="dot" style="font-size:40px; font-family:var(--ff-display); font-weight:800;">·</span><span style="font-size:33px; font-weight:600;">Accompagnement des copropriétaires</span></div>
+          <div class="row" style="gap:24px; align-items:center;"><span class="dot" style="font-size:40px; font-family:var(--ff-display); font-weight:800;">·</span><span style="font-size:33px; font-weight:600;">Interventions en assemblée générale</span></div>
+          <div class="row" style="gap:24px; align-items:center;"><span class="dot" style="font-size:40px; font-family:var(--ff-display); font-weight:800;">·</span><span style="font-size:33px; font-weight:600;">Présentation pédagogique des études</span></div>
+        </div>
+        <div class="grow"></div>
+        <p class="lead anim d4" style="max-width:34ch;">Une expertise particulière, certifiée, au service des copropriétés.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 — ÉNERGIES RENOUVELABLES -->
+  <section data-label="Énergies renouvelables" class="slide">
+    <div class="pad">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Énergies renouvelables</span></div>
+      <h2 class="title anim d2" style="font-size:64px; max-width:26ch;">Évaluer le <span class="o">potentiel ENR</span> de votre bâtiment</h2>
+      <p class="lead anim d2" style="margin-top:22px; max-width:60ch; font-size:30px;">Études de faisabilité technico-économiques, du gisement au temps de retour sur investissement.</p>
+      <div class="cards anim d3" style="grid-template-columns:1fr 1fr 1fr 1fr; flex:1; margin-top:48px;">
+        <div class="card">
+          <span class="tag">01 · Photovoltaïque</span>
+          <p style="font-size:25px;">Autoconsommation collective ou revente.</p>
+          <span class="pill">TRI 8–11 ans</span>
+        </div>
+        <div class="card">
+          <span class="tag">02 · Réseau de chaleur</span>
+          <p style="font-size:25px;">Raccordement urbain à fort mix renouvelable.</p>
+          <span class="pill">Gain significatif</span>
+        </div>
+        <div class="card">
+          <span class="tag">03 · Solaire thermique</span>
+          <p style="font-size:25px;">Production d'eau chaude sanitaire.</p>
+          <span class="pill">Appoint estival</span>
+        </div>
+        <div class="card">
+          <span class="tag">04 · Biomasse</span>
+          <p style="font-size:25px;">Chaufferie &amp; silo de stockage.</p>
+          <span class="pill">Selon configuration</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 — BÂTIMENTS TERTIAIRES -->
+  <section data-label="Bâtiments tertiaires" class="slide dark">
+    <div class="pad">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Bâtiments tertiaires</span></div>
+      <h2 class="title anim d2" style="font-size:66px; max-width:24ch;">La trajectoire du <span class="o">décret tertiaire</span></h2>
+      <p class="lead anim d2" style="margin-top:22px; max-width:65ch; font-size:30px;">Réduction obligatoire des consommations pour les bâtiments de plus de 1 000 m².</p>
+      <div class="row anim d3" style="gap:48px; margin-top:auto; align-items:flex-end; justify-content:space-between;">
+        <div class="col" style="gap:8px;">
+          <span class="mega">−40<span class="u">%</span></span>
+          <span style="font-family:var(--ff-display); font-weight:700; font-size:34px; color:var(--slate);">d'ici 2030</span>
+        </div>
+        <div style="width:2px; height:200px; background:var(--line);"></div>
+        <div class="col" style="gap:8px;">
+          <span class="mega">−50<span class="u">%</span></span>
+          <span style="font-family:var(--ff-display); font-weight:700; font-size:34px; color:var(--slate);">d'ici 2040</span>
+        </div>
+        <div style="width:2px; height:200px; background:var(--line);"></div>
+        <div class="col" style="gap:8px;">
+          <span class="mega" style="color:var(--orange);">−60<span class="u" style="color:var(--white);">%</span></span>
+          <span style="font-family:var(--ff-display); font-weight:700; font-size:34px; color:var(--slate);">d'ici 2050</span>
+        </div>
+      </div>
+      <p class="anim d4" style="margin-top:50px; font-size:25px; color:var(--slate-d);">Bureaux · commerces · hôtellerie &amp; restauration · santé · écoles &amp; universités · collectivités.</p>
+    </div>
+  </section>
+
+  <!-- 08 — CHIFFRES CLÉS -->
+  <section data-label="Chiffres clés 2025" class="slide">
+    <div class="pad">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Chiffres clés — 2025</span></div>
+      <h2 class="title anim d2" style="font-size:64px; margin-bottom:14px;">Projets accompagnés cette année</h2>
+      <p class="lead anim d2" style="font-size:30px;">Présence sur l'ensemble du territoire métropolitain.</p>
+      <div class="row" style="flex:1; align-items:center; gap:120px; margin-top:10px;">
+        <div class="anim d3" style="position:relative; width:430px; height:430px; flex:none;">
+          <div style="position:absolute; inset:0; border-radius:50%;
+            background:conic-gradient(var(--orange) 0 56%, #E8EEF3 56% 88%, var(--yellow) 88% 100%);"></div>
+          <div style="position:absolute; inset:62px; border-radius:50%; background:var(--navy); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <span style="font-family:var(--ff-display); font-weight:800; font-size:84px; line-height:1;">100<span style="font-size:.5em; color:var(--orange);">%</span></span>
+            <span style="font-size:24px; color:var(--slate); margin-top:6px;">accompagnés</span>
+          </div>
+        </div>
+        <div class="col anim d4" style="gap:46px; flex:1;">
+          <div class="col" style="gap:6px; border-left:6px solid var(--orange); padding-left:30px;">
+            <span style="font-family:var(--ff-display); font-weight:800; font-size:78px; line-height:1;">56<span style="font-size:.5em; color:var(--orange);">%</span></span>
+            <span style="font-size:30px; color:var(--slate); font-weight:600;">Immeubles collectifs</span>
+          </div>
+          <div class="col" style="gap:6px; border-left:6px solid #E8EEF3; padding-left:30px;">
+            <span style="font-family:var(--ff-display); font-weight:800; font-size:78px; line-height:1;">32<span style="font-size:.5em; color:#E8EEF3;">%</span></span>
+            <span style="font-size:30px; color:var(--slate); font-weight:600;">Maisons individuelles &amp; appartements</span>
+          </div>
+          <div class="col" style="gap:6px; border-left:6px solid var(--yellow); padding-left:30px;">
+            <span style="font-family:var(--ff-display); font-weight:800; font-size:78px; line-height:1;">12<span style="font-size:.5em; color:var(--yellow);">%</span></span>
+            <span style="font-size:30px; color:var(--slate); font-weight:600;">Tertiaire</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 — NOS VALEURS -->
+  <section data-label="Nos valeurs" class="slide dark">
+    <div class="pad">
+      <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Nos valeurs</span></div>
+      <h2 class="title anim d2" style="font-size:64px; margin-bottom:60px;">Ce qui guide nos études</h2>
+      <div class="vgrid anim d3" style="flex:1; align-content:center;">
+        <div class="vitem"><span class="vn">01</span><div><h3>Rigueur technique</h3><p>Analyses thermiques &amp; instrumentation de terrain.</p></div></div>
+        <div class="vitem"><span class="vn">02</span><div><h3>Indépendance</h3><p>Préconisations impartiales, hors influence travaux.</p></div></div>
+        <div class="vitem"><span class="vn">03</span><div><h3>Pédagogie</h3><p>Accompagnement en AG &amp; auprès des copropriétaires.</p></div></div>
+        <div class="vitem"><span class="vn">04</span><div><h3>Stratégie long terme</h3><p>Valorisation patrimoniale du bâti.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — NOTRE ÉQUIPE -->
+  <section data-label="Notre équipe" class="slide">
+    <div class="split" style="grid-template-columns:1fr 1.08fr;">
+      <div class="txt">
+        <div class="eyebrow anim d1"><span class="bar"></span><span class="kicker">Notre équipe</span></div>
+        <h2 class="title anim d2" style="font-size:70px;">Une équipe<br/><span class="o">sur le terrain</span><span class="dot">.</span></h2>
+        <div class="col anim d3" style="gap:22px; margin-top:48px;">
+          <span style="font-size:32px; font-weight:700; font-family:var(--ff-display);">Ingénieurs thermiciens</span>
+          <span style="font-size:32px; font-weight:700; font-family:var(--ff-display);">Équipe de planification des visites</span>
+          <span style="font-size:32px; font-weight:700; font-family:var(--ff-display);">Commerciaux &amp; fonctions supports</span>
+        </div>
+        <div class="grow"></div>
+        <p class="kicker anim d4" style="font-size:24px; color:var(--slate); margin-bottom:18px;">Certifiés &amp; reconnus</p>
+        <div class="certs anim d4">
+          <span class="cb">OPQIBI</span>
+          <span class="cb">RGE</span>
+          <span class="cb">AFNOR Certification</span>
+          <span class="cb">Bureau Veritas</span>
+          <span class="cb">CoachCopro</span>
+        </div>
+      </div>
+      <div class="img montage" style="padding:46px 46px 46px 0;">
+        <div class="row" style="gap:18px; height:100%;">
+          <div class="col" style="gap:18px; flex:1;">
+            <div class="mphoto" style="flex:1.2; border-radius:20px; background-image:url('assets/thermal-camera.jpg'); background-position:center 25%;"></div>
+            <div class="mphoto" style="flex:1; border-radius:20px; background-image:url('assets/garage.jpg'); background-position:center 20%;"></div>
+          </div>
+          <div class="col" style="gap:18px; flex:1; padding-top:60px;">
+            <div class="mphoto" style="flex:1; border-radius:20px; background-image:url('assets/basement.jpg'); background-position:center 30%;"></div>
+            <div class="mphoto" style="flex:1.2; border-radius:20px; background-image:url('assets/alpine-street.jpg'); background-position:center 30%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 — CONTACT -->
+  <section data-label="Contact" class="slide dark">
+    <div class="img imgzoom" style="position:absolute; inset:0;">
+      <div class="photo" style="position:absolute; inset:0; background-image:url('assets/paris-window.jpg'); background-position:center 26%; opacity:.22;"></div>
+    </div>
+    <div class="ph-tint" style="background:linear-gradient(90deg, var(--navy-2) 30%, rgba(11,26,40,.55) 100%);"></div>
+    <div class="pad" style="justify-content:center;">
+      <div class="logo anim d1" style="font-size:54px;">EnergyCo<span class="pt">.</span></div>
+      <h2 class="title anim d2" style="font-size:92px; margin-top:34px;">Parlons de<br/>votre <span class="o">projet</span><span class="dot">.</span></h2>
+      <div class="row anim d3" style="gap:70px; margin-top:64px; flex-wrap:wrap;">
+        <div class="col" style="gap:8px;">
+          <span class="kicker" style="font-size:24px; color:var(--slate);">Adresse</span>
+          <span style="font-size:34px; font-weight:600; font-family:var(--ff-display);">149 avenue de Maine — 75142 Paris</span>
+        </div>
+      </div>
+      <div class="row anim d4" style="gap:70px; margin-top:40px; flex-wrap:wrap;">
+        <div class="col" style="gap:8px;">
+          <span class="kicker" style="font-size:24px; color:var(--slate);">Téléphone</span>
+          <span style="font-size:34px; font-weight:600; font-family:var(--ff-display);">+33 1 87 66 32 59</span>
+        </div>
+        <div class="col" style="gap:8px;">
+          <span class="kicker" style="font-size:24px; color:var(--slate);">Email</span>
+          <span style="font-size:34px; font-weight:600; font-family:var(--ff-display);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="90f3fffee4f1f3e4d0f5fef5e2f7e9f3ffbef6e2">[email&#160;protected]</a></span>
+        </div>
+        <div class="col" style="gap:8px;">
+          <span class="kicker" style="font-size:24px; color:var(--slate);">Site</span>
+          <span style="font-size:34px; font-weight:600; font-family:var(--ff-display); color:var(--orange);">energyco.fr</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</deck-stage>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#0B1A28"/>
+    <text x="50" y="58" font-family="Poppins,sans-serif" font-weight="800" font-size="22" fill="#fff" text-anchor="middle">ECo<tspan fill="#F26C2B">.</tspan></text>
+  </svg>
+</template>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="deck-stage.js"></script>
+<script>
+  (function(){
+    var DURATION = 7000;            // ms par slide
+    var deck = document.querySelector('deck-stage');
+    var bar  = document.getElementById('progress');
+    var timer = null;
+    var idx = 0, total = 11;
+
+    function runBar(){
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      // force reflow
+      void bar.offsetWidth;
+      bar.style.transition = 'width ' + DURATION + 'ms linear';
+      bar.style.width = '100%';
+    }
+    function schedule(){
+      clearTimeout(timer);
+      runBar();
+      timer = setTimeout(function(){
+        deck.goTo((idx + 1) % total);
+      }, DURATION);
+    }
+    deck.addEventListener('slidechange', function(e){
+      idx = e.detail.index;
+      total = e.detail.total || total;
+      schedule();
+    });
+    // safety: kick off in case slidechange-init already fired before listener
+    setTimeout(function(){ if(!timer){ schedule(); } }, 400);
+  })();
+</script>
+</body>
+</html>
